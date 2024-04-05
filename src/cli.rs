@@ -2,6 +2,7 @@
 use crate::utils;
 use clap::Parser;
 use rand::Rng;
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 
 const ASCII_UPPER: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const ASCII_LOWER: &str = "abcdefghijklmnopqrstuvwxyz";
@@ -49,51 +50,68 @@ impl Pswd {
         }
         *self
     }
+
+    /// Return a Vec of all usable characters as specified.
+    pub fn get_charset(&self) -> Vec<char> {
+        let mut chars: Vec<char> = Vec::new();
+
+        if self.all || self.upper {
+            chars.extend(utils::to_vec_char(ASCII_UPPER));
+        }
+
+        if self.all || self.lower {
+            chars.extend(utils::to_vec_char(ASCII_LOWER));
+        }
+
+        if self.all || self.numbers {
+            chars.extend(utils::to_vec_char(ASCII_NUMBERS));
+        }
+
+        if self.all || self.symbols {
+            chars.extend(utils::to_vec_char(ASCII_SYMBOLS));
+        }
+
+        chars
+    }
+
+    /// Generate a password.
+    fn generate(&self) -> String {
+        let mut password = String::new();
+        let mut rng = rand::thread_rng();
+
+        let chars = self.get_charset();
+
+        for _ in 0..self.length {
+            let idx = rng.gen_range(0..chars.len());
+            password.push(chars[idx]);
+        }
+
+        password
+    }
+
+    /// Generate a password and insert it into the user's clipboard.
+    ///
+    /// Returns the password if the display flag is set, or None if
+    /// it has been ommited.
+    pub fn generate_in_clipboard(&self) -> Option<String> {
+        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+
+        let pass = self.generate();
+        ctx.set_contents(pass.to_owned()).unwrap();
+
+        match self.display {
+            true => Some(pass),
+            false => None,
+        }
+    }
 }
 
-/// Return a Vec of all usable characters as specified.
-fn get_charset(pswd: &Pswd) -> Vec<char> {
-    let mut chars: Vec<char> = Vec::new();
-
-    if pswd.all || pswd.upper {
-        chars.extend(utils::to_vec_char(ASCII_UPPER));
-    }
-
-    if pswd.all || pswd.lower {
-        chars.extend(utils::to_vec_char(ASCII_LOWER));
-    }
-
-    if pswd.all || pswd.numbers {
-        chars.extend(utils::to_vec_char(ASCII_NUMBERS));
-    }
-
-    if pswd.all || pswd.symbols {
-        chars.extend(utils::to_vec_char(ASCII_SYMBOLS));
-    }
-
-    chars
-}
-
-/// Generate a password.
-pub fn generate_pass(pswd: &Pswd) -> String {
-    let mut password = String::new();
-    let mut rng = rand::thread_rng();
-
-    let chars = get_charset(pswd);
-
-    for _ in 0..pswd.length {
-        let idx = rng.gen_range(0..chars.len());
-        password.push(chars[idx]);
-    }
-
-    password
-}
 
 #[cfg(test)]
 pub mod tests {
     use crate::utils::to_vec_char;
 
-    use super::{generate_pass, get_charset, Pswd, ASCII_LOWER, ASCII_NUMBERS, ASCII_UPPER};
+    use super::{Pswd, ASCII_LOWER, ASCII_NUMBERS, ASCII_UPPER};
 
     /// Test that the generate_pass method creates a password of the correct lenght.
     #[test]
@@ -108,7 +126,7 @@ pub mod tests {
             symbols: false,
         };
 
-        let pass = generate_pass(&pswd);
+        let pass = pswd.generate();
 
         assert_eq!(pass.len(), pswd.length)
     }
@@ -126,7 +144,7 @@ pub mod tests {
             numbers: true,
         };
 
-        let chars = get_charset(&pswd);
+        let chars = pswd.get_charset();
         let mut expected = to_vec_char(ASCII_UPPER);
         expected.extend(to_vec_char(ASCII_LOWER));
         expected.extend(to_vec_char(ASCII_NUMBERS));

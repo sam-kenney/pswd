@@ -7,11 +7,9 @@ use clap::Parser;
 /// Generate a random password of a specified length using the
 /// requested character set, and optionally print to the terminal.
 fn main() {
-    let pswd = Pswd::parse().validate();
-    let pass = cli::generate_pass(&pswd);
-    utils::to_clipboard(&pass);
+    let password = Pswd::parse().validate().generate_in_clipboard();
 
-    if pswd.display {
+    if let Some(pass) = password {
         println!("{pass}")
     }
 }
