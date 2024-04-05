@@ -39,7 +39,7 @@ pub struct Pswd {
 
     /// Print the password out once generated
     #[arg(short, long, default_value = "false")]
-    pub display: bool,
+    display: bool,
 }
 
 impl Pswd {
