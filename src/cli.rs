@@ -1,8 +1,8 @@
 //! Module for the pswd CLI struct.
 use crate::utils;
 use clap::Parser;
-use rand::Rng;
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
+use rand::Rng;
 
 const ASCII_UPPER: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const ASCII_LOWER: &str = "abcdefghijklmnopqrstuvwxyz";
@@ -39,20 +39,29 @@ pub struct Pswd {
 
     /// Print the password out once generated
     #[arg(short, long, default_value = "false")]
-    display: bool,
+    print: bool,
+
+    /// Show debug messages including clipboard errors
+    #[arg(short, long, default_value = "false")]
+    debug: bool,
 }
 
 impl Pswd {
     /// Set the all flag to true if no flags have been provided.
-    pub fn validate(&mut self) -> Self {
-        if !self.all && !self.upper && !self.lower && !self.numbers && !self.symbols {
+    fn validate(&mut self) -> Self {
+        if !self.all
+            && !self.upper
+            && !self.lower
+            && !self.numbers
+            && !self.symbols
+        {
             self.all = true;
         }
         *self
     }
 
     /// Return a Vec of all usable characters as specified.
-    pub fn get_charset(&self) -> Vec<char> {
+    fn get_charset(&self) -> Vec<char> {
         let mut chars: Vec<char> = Vec::new();
 
         if self.all || self.upper {
@@ -93,19 +102,37 @@ impl Pswd {
     ///
     /// Returns the password if the display flag is set, or None if
     /// it has been ommited.
-    pub fn generate_in_clipboard(&self) -> Option<String> {
-        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    pub fn generate_in_clipboard(&mut self) -> Option<String> {
+        let pass = self.validate().generate();
 
-        let pass = self.generate();
-        ctx.set_contents(pass.to_owned()).unwrap();
+        if let Err(e) = set_clipboard_contents(&pass) {
+            if self.debug {
+                eprintln!("{e}");
+            }
+        }
 
-        match self.display {
+        match self.print {
             true => Some(pass),
             false => None,
         }
     }
 }
 
+/// Set the contents of the user's clipboard.
+fn set_clipboard_contents(pass: &String) -> Result<(), String> {
+    let mut clipboard: ClipboardContext =
+        ClipboardProvider::new().map_err(|_| {
+            "Could not initialise clipboard. ".to_string() +
+            "Try running using the -d flag and manually copying."
+        })?;
+
+    clipboard.set_contents(pass.to_owned()).map_err(|_| {
+        "Could not copy password to clipboard. ".to_string() +
+        "Try running with the -d flag and manually copying."
+    })?;
+
+    Ok(())
+}
 
 #[cfg(test)]
 pub mod tests {
@@ -119,11 +146,12 @@ pub mod tests {
         let pswd = Pswd {
             length: 8,
             all: true,
-            display: false,
+            print: false,
             lower: false,
             upper: false,
             numbers: false,
             symbols: false,
+            debug: false,
         };
 
         let pass = pswd.generate();
@@ -137,11 +165,12 @@ pub mod tests {
         let pswd = Pswd {
             length: 8,
             all: false,
-            display: false,
+            print: false,
             lower: true,
             upper: true,
             symbols: false,
             numbers: true,
+            debug: false,
         };
 
         let chars = pswd.get_charset();
