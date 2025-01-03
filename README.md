@@ -4,8 +4,7 @@ Password generation CLI tool.
 ## Install
 Install [Cargo](https://www.rust-lang.org/tools/install)
 ```sh
-git clone git@github.com:sam-kenney/pswd.git
-cargo install --path pswd
+cargo install --git https://github.com/sam-kenney/pswd
 ```
 
 ## Usage
