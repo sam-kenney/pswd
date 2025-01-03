@@ -105,10 +105,9 @@ impl Pswd {
     pub fn generate_in_clipboard(&mut self) -> Option<String> {
         let pass = self.validate().generate();
 
-        if let Err(e) = set_clipboard_contents(&pass) {
-            if self.debug {
-                eprintln!("{e}");
-            }
+        match set_clipboard_contents(&pass) {
+            Err(e) if self.debug => println!("{e}"),
+            _ => (),
         }
 
         match self.print {
