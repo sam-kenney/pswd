@@ -1,5 +1,5 @@
 //! Module for the pswd CLI struct.
-use crate::utils;
+use crate::utils::Chars;
 use clap::Parser;
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use rand::Rng;
@@ -65,19 +65,19 @@ impl Pswd {
         let mut chars: Vec<char> = Vec::new();
 
         if self.all || self.upper {
-            chars.extend(utils::to_vec_char(ASCII_UPPER));
+            chars.extend(ASCII_UPPER.as_chars());
         }
 
         if self.all || self.lower {
-            chars.extend(utils::to_vec_char(ASCII_LOWER));
+            chars.extend(ASCII_LOWER.as_chars());
         }
 
         if self.all || self.numbers {
-            chars.extend(utils::to_vec_char(ASCII_NUMBERS));
+            chars.extend(ASCII_NUMBERS.as_chars());
         }
 
         if self.all || self.symbols {
-            chars.extend(utils::to_vec_char(ASCII_SYMBOLS));
+            chars.extend(ASCII_SYMBOLS.as_chars());
         }
 
         chars
@@ -122,13 +122,13 @@ impl Pswd {
 fn set_clipboard_contents(pass: &String) -> Result<(), String> {
     let mut clipboard: ClipboardContext =
         ClipboardProvider::new().map_err(|_| {
-            "Could not initialise clipboard. ".to_string() +
-            "Try running using the -d flag and manually copying."
+            "Could not initialise clipboard. ".to_string()
+                + "Try running using the -d flag and manually copying."
         })?;
 
     clipboard.set_contents(pass.to_owned()).map_err(|_| {
-        "Could not copy password to clipboard. ".to_string() +
-        "Try running with the -d flag and manually copying."
+        "Could not copy password to clipboard. ".to_string()
+            + "Try running with the -d flag and manually copying."
     })?;
 
     Ok(())
@@ -136,7 +136,7 @@ fn set_clipboard_contents(pass: &String) -> Result<(), String> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::utils::to_vec_char;
+    use crate::utils::Chars;
 
     use super::{Pswd, ASCII_LOWER, ASCII_NUMBERS, ASCII_UPPER};
 
@@ -174,9 +174,9 @@ pub mod tests {
         };
 
         let chars = pswd.get_charset();
-        let mut expected = to_vec_char(ASCII_UPPER);
-        expected.extend(to_vec_char(ASCII_LOWER));
-        expected.extend(to_vec_char(ASCII_NUMBERS));
+        let mut expected = ASCII_UPPER.as_chars();
+        expected.extend(ASCII_LOWER.as_chars());
+        expected.extend(ASCII_NUMBERS.as_chars());
 
         assert_eq!(chars, expected)
     }
