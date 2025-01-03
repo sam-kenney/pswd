@@ -17,7 +17,7 @@ pub struct Pswd {
     #[arg()]
     length: usize,
 
-    /// Use all ASCII charaters
+    /// Use all ASCII characters
     #[arg(short, long)]
     all: bool,
 
@@ -101,7 +101,7 @@ impl Pswd {
     /// Generate a password and insert it into the user's clipboard.
     ///
     /// Returns the password if the display flag is set, or None if
-    /// it has been ommited.
+    /// it has been omitted.
     pub fn generate_in_clipboard(&mut self) -> Option<String> {
         let pass = self.validate().generate();
 
@@ -140,7 +140,7 @@ pub mod tests {
 
     use super::{Pswd, ASCII_LOWER, ASCII_NUMBERS, ASCII_UPPER};
 
-    /// Test that the generate_pass method creates a password of the correct lenght.
+    /// Test that the generate_pass method creates a password of the correct length.
     #[test]
     fn test_generate_pass_has_correct_length_password() {
         let pswd = Pswd {
